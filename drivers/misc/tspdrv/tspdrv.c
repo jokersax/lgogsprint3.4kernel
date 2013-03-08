@@ -42,8 +42,8 @@
 #include <linux/miscdevice.h>
 #include <linux/platform_device.h>
 #include <asm/uaccess.h>
-#include <tspdrv.h>
-#include <ImmVibeSPI.c>
+#include <../drivers/misc/tspdrv/tspdrv.h>
+#include <../drivers/misc/tspdrv/ImmVibeSPI.c>
 #if defined(VIBE_DEBUG) && defined(VIBE_RECORD)
 #include <tspdrvRecorder.c>
 #endif
@@ -88,9 +88,9 @@ static int g_nMajor = 0;
 
 /* Needs to be included after the global variables because it uses them */
 #ifdef CONFIG_HIGH_RES_TIMERS
-    #include <VibeOSKernelLinuxHRTime.c>
+    #include <../drivers/misc/tspdrv/VibeOSKernelLinuxHRTime.c>
 #else
-    #include <VibeOSKernelLinuxTime.c>
+    #include <../drivers/misc/tspdrv/VibeOSKernelLinuxTime.c>
 #endif
 
 /* File IO */
