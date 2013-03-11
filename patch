@@ -1,34 +1,77 @@
-From db8a597cfd8de309fe0c3438e21dea68753e25b0 Mon Sep 17 00:00:00 2001
-From: Iliyan Malchev <malchev@google.com>
-Date: Fri, 22 Jun 2012 16:26:46 -0700
-Subject: [PATCH] staging: include the prima wlan driver
+From b0e2d2e5f440c344dbbb5ca87770e6c4e0b84bee Mon Sep 17 00:00:00 2001
+From: Miao Xie <miaox@cn.fujitsu.com>
+Date: Mon, 19 Mar 2012 17:14:04 -0700
+Subject: [PATCH] lib/string: use glibc version
 
-Signed-off-by: Iliyan Malchev <malchev@google.com>
+the performance of memcpy and memmove of the general version is very
+inefficient, this patch improved them.
+
+Signed-off-by: Miao Xie <miaox*******>
+
+Conflicts:
+
+	lib/string.c
 ---
- drivers/staging/Kconfig  |    2 ++
- drivers/staging/Makefile |    1 +
- 2 files changed, 3 insertions(+)
+ lib/string.c |   29 ++++++++++++-----------------
+ 1 file changed, 12 insertions(+), 17 deletions(-)
 
-diff --git a/drivers/staging/Kconfig b/drivers/staging/Kconfig
-index bcec934..ce8276f 100644
---- a/drivers/staging/Kconfig
-+++ b/drivers/staging/Kconfig
-@@ -134,4 +134,6 @@ source "drivers/staging/ramster/Kconfig"
+diff --git a/lib/string.c b/lib/string.c
+index e5878de..070a3ed 100644
+--- a/lib/string.c
++++ b/lib/string.c
+@@ -26,6 +26,7 @@
+ #include <linux/export.h>
+ #include <linux/bug.h>
+ #include <linux/errno.h>
++#include <linux/memcopy.h>
  
- source "drivers/staging/ozwpan/Kconfig"
+ #ifndef __HAVE_ARCH_STRNICMP
+ /**
+@@ -598,11 +599,11 @@ void *memset(void *s, int c, size_t count)
+  */
+ void *memcpy(void *dest, const void *src, size_t count)
+ {
+-	char *tmp = dest;
+-	const char *s = src;
++	unsigned long dstp = (unsigned long)dest; 
++	unsigned long srcp = (unsigned long)src; 
  
-+source "drivers/staging/prima/Kconfig"
-+
- endif # STAGING
-diff --git a/drivers/staging/Makefile b/drivers/staging/Makefile
-index c31f2ec..993786c 100644
---- a/drivers/staging/Makefile
-+++ b/drivers/staging/Makefile
-@@ -58,3 +58,4 @@ obj-$(CONFIG_ANDROID)		+= android/
- obj-$(CONFIG_PHONE)		+= telephony/
- obj-$(CONFIG_RAMSTER)		+= ramster/
- obj-$(CONFIG_USB_WPAN_HCD)	+= ozwpan/
-+obj-$(CONFIG_PRIMA_WLAN)	+= prima/
+-	while (count--)
+-		*tmp++ = *s++;
++	/* Copy from the beginning to the end */ 
++	mem_copy_fwd(dstp, srcp, count); 
+ 	return dest;
+ }
+ EXPORT_SYMBOL(memcpy);
+@@ -619,21 +620,15 @@ void *memcpy(void *dest, const void *src, size_t count)
+  */
+ void *memmove(void *dest, const void *src, size_t count)
+ {
+-	char *tmp;
+-	const char *s;
++	unsigned long dstp = (unsigned long)dest; 
++	unsigned long srcp = (unsigned long)src; 
+ 
+-	if (dest <= src) {
+-		tmp = dest;
+-		s = src;
+-		while (count--)
+-			*tmp++ = *s++;
++	if (dest - src >= count) { 
++		/* Copy from the beginning to the end */ 
++		mem_copy_fwd(dstp, srcp, count); 
+ 	} else {
+-		tmp = dest;
+-		tmp += count;
+-		s = src;
+-		s += count;
+-		while (count--)
+-			*--tmp = *--s;
++		/* Copy from the end to the beginning */ 
++		mem_copy_bwd(dstp, srcp, count); 
+ 	}
+ 	return dest;
+ }
 -- 
 1.7.10
 
